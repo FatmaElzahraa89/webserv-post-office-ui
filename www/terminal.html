@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Terminal · webserv Post Office</title>
+  <link rel="stylesheet" href="/css/fonts.css">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/pages.css">
+  <style>
+    /* this page only: a list of terminal commands, grouped by room */
+    .toc { display: flex; flex-wrap: wrap; gap: 8px 18px; padding-bottom: 28px; }
+    .toc a { font-family: var(--font-type); font-size: 14px; border-bottom: 1.5px dashed var(--line); }
+    .toc a:hover { color: var(--stamp); border-color: var(--stamp); }
+
+    .group { padding-bottom: 32px; scroll-margin-top: 16px; }
+    .group > .panel { gap: 0; }
+    .group-head { display: flex; flex-direction: column; gap: 4px; padding-bottom: 8px; }
+    .group-head p { margin: 0; }
+
+    .cmd-row {
+      display: grid;
+      grid-template-columns: 1fr 170px;     /* command + explanation · expected stamp */
+      gap: 10px 18px;
+      padding: 16px 0;
+      border-bottom: 1px dashed #CDBF9F;
+    }
+    .cmd-row:last-child { border-bottom: none; }
+    .cmd-title { font-weight: 600; }
+    .cmd-what { color: var(--muted); font-size: 14px; line-height: 1.5; margin: 0; }
+    .cmd-who { font-family: var(--font-type); font-size: 12px; color: var(--ink-blue); letter-spacing: .06em; }
+
+    .cmd-box { display: flex; align-items: stretch; gap: 8px; margin: 8px 0; }
+    .cmd-step {                              /* "Terminal 1 · ..." above a command */
+      display: block;
+      margin-top: 10px;
+      font-family: var(--font-type);
+      font-size: 12px;
+      letter-spacing: .06em;
+      color: var(--muted);
+    }
+    .cmd-step + .cmd-box { margin-top: 4px; }
+    .cmd-box pre {
+      flex: 1;
+      min-width: 0;
+      margin: 0;
+      padding: 10px 12px;
+      background: var(--ink);
+      color: var(--card);
+      border-radius: 8px;
+      font-family: var(--font-type);
+      font-size: 13.5px;
+      line-height: 1.5;
+      white-space: pre-wrap;                 /* long commands wrap, no sideways scroll */
+      word-break: break-all;
+    }
+    .copy {
+      flex: 0 0 auto;
+      min-width: 74px;
+      border: 2px solid var(--ink);
+      border-radius: 8px;
+      background: transparent;
+      color: var(--ink);
+      font-family: var(--font-type);
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .copy.done { border-color: #1F7A5A; color: #1F7A5A; }
+    a.copy {                                 /* "Open": a link that looks like the Copy button */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13.33px;
+    }
+    a.copy:hover { border-color: var(--ink-blue); color: var(--ink-blue); }
+
+    .expected {
+      align-self: start;
+      text-align: center;
+      font-family: var(--font-type);
+      font-weight: 700;
+      font-size: 14px;
+      line-height: 1.4;
+      color: var(--ink-blue);
+      border: 2px solid var(--ink-blue);
+      border-radius: 6px;
+      padding: 8px;
+      transform: rotate(-2deg);              /* a blue ink stamp, a bit crooked */
+    }
+    .expected.soon { color: var(--muted); border-color: var(--line); border-style: dashed; transform: none; }
+
+    .tip { font-size: 14px; color: var(--muted); }
+    .tip strong { color: var(--ink); }
+
+    @media (max-width: 700px) {
+      .cmd-row { grid-template-columns: 1fr; }
+      .expected { justify-self: start; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="header">
+    <div class="container header-inner">
+      <a class="brand" href="/">webserv <span class="brand-tag">POST OFFICE</span></a>
+      <nav class="nav">
+        <a href="/">Counter</a>
+        <a href="/upload.html">Send a parcel</a>
+        <a href="/delete.html">Mailroom</a>
+        <a href="/cgi.html">Workshop</a>
+        <a href="/tests.html">Inspections</a>
+        <a href="/terminal.html" class="active">Terminal</a>
+        <a href="/about.html">About</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <div class="page-head">
+      <span class="label">FROM THE TERMINAL</span>
+      <h1>Letters a browser won't send</h1>
+      <p>A browser cleans every request before sending it, so it can't test the broken ones. Here are the commands for the terminal: press <strong>Copy</strong>, paste in the terminal (<code>Ctrl+Shift+V</code>) and press Enter. Each one shows the answer to expect and what it checks. <strong>Open</strong> sends the same request from the browser, when a browser can; <strong>Page</strong> shows the error page the answer uses.</p>
+      <p class="tip"><strong>Before you start:</strong> <code>make</code> then <code>./webserv default.conf</code> in a first terminal, and paste the commands in a second one.</p>
+    </div>
+
+    <nav class="toc" id="toc"></nav>
+
+    <div id="groups"></div>
+
+  </main>
+
+  <script>
+    // ===== The commands =====
+    // Each group is one room of the post office. Each command has:
+    //   title  : what we send, in a few words
+    //   cmd    : the command to paste in the terminal
+    //   expect : the answer that counts as correct
+    //   what   : what it checks, and why it matters
+    //   who    : the part of the code that answers
+    //   soon   : (optional) true = not finished yet
+    //   first  : (optional) { step, cmd }: a command for ANOTHER terminal, run
+    //            before cmd, with its own Copy button. step says where.
+    //   step   : (with first) where to paste cmd
+    // No "#" comment lines in cmd: zsh does not accept them when pasted.
+    const GROUPS = [
+      {
+        id: "parser", title: "Broken letters", label: "ROOM 03 · OPENING ROOM",
+        text: "The HTTP parser reads the request. When something is wrong, it must answer with a clean error, never crash.",
+        commands: [
+          { title: "A size that is not a number", page: "/errors/400.html", expect: "400 Bad Request", who: "Protocol",
+            cmd: 'curl -i -H "Content-Length: abc" http://localhost:8080/',
+            what: "An invalid header is refused." },
+          { title: "HTTP/1.1 without Host", page: "/errors/400.html", expect: "400 Bad Request", who: "Protocol",
+            cmd: "printf 'GET / HTTP/1.1\\r\\n\\r\\n' | nc -q 1 localhost 8080",
+            what: "Host is required in HTTP/1.1 (HTTP/1.0 without Host gives 200)." },
+          { title: "A broken first line", page: "/errors/400.html", expect: "400 Bad Request", who: "Protocol",
+            cmd: "printf 'GET\\r\\n\\r\\n' | nc -q 1 localhost 8080",
+            what: "The request line needs 3 parts: method, path, version." },
+          { title: "An unknown HTTP version", expect: "505 HTTP Version Not Supported", who: "Protocol",
+            cmd: "printf 'GET / HTTP/9.9\\r\\nHost: localhost\\r\\n\\r\\n' | nc -q 1 localhost 8080",
+            what: "Only HTTP/1.0 and HTTP/1.1 are understood." },
+          { title: "A POST without its size", expect: "411 Length Required", who: "Protocol",
+            cmd: "printf 'POST /uploads/a.txt HTTP/1.1\\r\\nHost: localhost\\r\\n\\r\\n' | nc -q 1 localhost 8080",
+            what: "A POST sends a body: it needs Content-Length or chunked." },
+          { title: "An unknown encoding", expect: "501 Not Implemented", who: "Protocol",
+            cmd: "printf 'POST /uploads/a.txt HTTP/1.1\\r\\nHost: localhost\\r\\nTransfer-Encoding: gzip\\r\\n\\r\\n' | nc -q 1 localhost 8080",
+            what: "Only Transfer-Encoding: chunked is handled." },
+          { title: "An unknown method", expect: "501 Not Implemented", who: "Protocol",
+            cmd: "curl -i -X PUT http://localhost:8080/",
+            what: "The server only knows GET, POST and DELETE." },
+          { title: "Headers far too big (20 KB)", expect: "431 Request Header Fields Too Large", who: "Protocol",
+            cmd: 'curl -i -H "X-Big: $(head -c 20000 /dev/zero | tr \'\\0\' a)" http://localhost:8080/',
+            what: "A client can't fill the server's memory with headers." },
+          { title: "A body bigger than the limit (11 MB)", page: "/errors/413.html", expect: "413 Payload Too Large", who: "Protocol",
+            cmd: "head -c 11000000 /dev/zero | curl -i --data-binary @- http://localhost:8080/uploads/big.bin",
+            what: "client_max_body_size 10M from the config is enforced, and no file is created." }
+        ]
+      },
+      {
+        id: "routes", title: "The sorting room", label: "ROOM 04 · ROUTES AND SECURITY",
+        text: "The address is checked against the config: which location, which methods, which folder on the disk.",
+        commands: [
+          { title: "Escape the site with ../", page: "/errors/403.html", expect: "403 Forbidden", who: "Protocol",
+            cmd: "curl -i --path-as-is http://localhost:8080/../../etc/passwd",
+            what: "Never a file outside the root. --path-as-is stops curl from cleaning the ../ itself." },
+          { title: "A method not allowed here", page: "/errors/405.html", expect: "405 + Allow: GET", who: "Protocol",
+            cmd: "curl -i -X DELETE http://localhost:8080/",
+            what: "location / only allows GET; the Allow header says which methods are allowed." },
+          { title: "A redirection of the config", expect: "301 + Location: /", who: "Protocol",
+            cmd: "curl -i http://localhost:8080/old-page", open: "/old-page",
+            what: "return 301 / in the config. With Open, the browser follows the 301 by itself: the address bar ends on /." },
+          { title: "A folder without its final /", expect: "301 + Location: /uploads/", who: "Protocol",
+            cmd: "curl -i http://localhost:8080/uploads", open: "/uploads",
+            what: "Like nginx: otherwise the relative links of the listing would be wrong. With Open, the address bar ends on /uploads/." },
+          { title: "A folder listing", expect: "200 + the list", who: "Protocol",
+            cmd: "curl -i http://localhost:8080/uploads/", open: "/uploads/",
+            what: "autoindex on: the server writes an HTML page with one link per file." },
+          { title: "A folder without index, autoindex off", expect: "403 Forbidden", who: "Protocol",
+            cmd: "curl -i http://localhost:8080/errors/", open: "/errors/",
+            what: "No index.html and no listing allowed: the server refuses." },
+          { title: "An unknown address", expect: "404 + the custom page", who: "Protocol + Config",
+            cmd: "curl -i http://localhost:8080/nowhere", open: "/nowhere",
+            what: "error_page 404 /errors/404.html from the config." },
+          { title: "The announced size is the real size", expect: "the 2 numbers match", who: "Protocol",
+            cmd: "curl -s -o /dev/null -D - -w '%{size_download} bytes received\\n' http://localhost:8080/ | grep -i -E 'content-length|bytes'",
+            what: "Content-Length must be exactly the number of bytes of the body." }
+        ]
+      },
+      {
+        id: "parcels", title: "Parcels", label: "ROOM 05B + 05C · UPLOAD AND DELETE",
+        text: "A file is sent, read, then shredded. The files land in www/uploads/ (upload_store in the config).",
+        commands: [
+          { title: "Send a file", expect: "201 Created", who: "Protocol",
+            cmd: 'curl -i --data-binary "hello" http://localhost:8080/uploads/demo.txt',
+            what: "The body is saved as www/uploads/demo.txt." },
+          { title: "Read it back", expect: "200 + hello", who: "Protocol",
+            cmd: "curl -i http://localhost:8080/uploads/demo.txt", open: "/uploads/demo.txt",
+            what: "The file really is on the server. Run \"Send a file\" first: before it, demo.txt does not exist (404)." },
+          { title: "Shred it", expect: "200 OK", who: "Protocol (handleDelete: Core)",
+            cmd: "curl -i -X DELETE http://localhost:8080/uploads/demo.txt",
+            what: "The file is removed from the disk." },
+          { title: "Shred it again", page: "/errors/404.html", expect: "404 Not Found", who: "Protocol (handleDelete: Core)",
+            cmd: "curl -i -X DELETE http://localhost:8080/uploads/demo.txt",
+            what: "It does not exist any more." },
+          { title: "A POST without a file name", page: "/errors/400.html", expect: "400 Bad Request", who: "Protocol",
+            cmd: "curl -i --data-binary x http://localhost:8080/uploads/",
+            what: "The server needs a name to create the file." },
+          { title: "A body sent in chunks", expect: "201 + the clean text", who: "Protocol",
+            cmd: 'curl -i -H "Transfer-Encoding: chunked" --data-binary "hello chunked" http://localhost:8080/uploads/chunk.txt && cat www/uploads/chunk.txt',
+            what: "The file contains hello chunked, without the chunk sizes (d\\r\\n...0\\r\\n)." },
+          { title: "A file from a form (multipart)", expect: "201 Created", who: "Protocol",
+            cmd: 'curl -i -F "file=@README.md" http://localhost:8080/uploads',
+            what: "What a browser sends (Send a parcel page): the server unpacks the multipart body and saves README.md in www/uploads/." },
+          { title: "The server can't write", page: "/errors/500.html", expect: "500 Internal Server Error", who: "Protocol",
+            cmd: "chmod u-w www/uploads\ncurl -i --data-binary x http://localhost:8080/uploads/t.txt\nchmod u+w www/uploads",
+            what: "www/uploads is made read-only, so the file can't be created: a clean 500, no crash. The last line gives the right back." }
+        ]
+      },
+      {
+        id: "cgi", title: "The workshop", label: "ROOM 05D · CGI",
+        text: "A Python script writes the reply. The server runs it with fork() + execve() and never waits for it.",
+        commands: [
+          { title: "A note in the address", expect: "200 + Solenn in the page", who: "Protocol (CGI)",
+            cmd: 'curl -i "http://localhost:8080/cgi-bin/hello.py?name=Solenn"', open: "/cgi-bin/hello.py?name=Solenn",
+            what: "The script reads QUERY_STRING." },
+          { title: "A letter in the body", expect: "200 + Received Body (11 bytes)", who: "Protocol (CGI)",
+            cmd: 'curl -i -d "name=Solenn" http://localhost:8080/cgi-bin/form.py',
+            what: "The body reaches the script on stdin, with CONTENT_LENGTH." },
+          { title: "A letter in chunks", expect: "200 + Received Body (11 bytes)", who: "Protocol (CGI)",
+            cmd: 'curl -i -H "Transfer-Encoding: chunked" --data-binary "name=Solenn" http://localhost:8080/cgi-bin/form.py',
+            what: "The script never sees the chunks: the server joins them first." },
+          { title: "A script that does not exist", expect: "404 Not Found", who: "Protocol (CGI)",
+            cmd: "curl -i http://localhost:8080/cgi-bin/nope.py", open: "/cgi-bin/nope.py",
+            what: "No fork for a missing file." },
+          { title: "A broken script", page: "/errors/502.html", expect: "502 Bad Gateway", who: "Protocol (CGI)",
+            cmd: "curl -i http://localhost:8080/cgi-bin/broken.py", open: "/cgi-bin/broken.py",
+            what: "broken.py prints a line but no Content-Type and no blank line: the server can't build a reply from it, and the server still runs." },
+          { title: "A script that is too slow (2 terminals)", open: "/cgi-bin/slow.py", page: "/errors/504.html", expect: "504 after 5 s · 200 at once", who: "Protocol (CGI) + Core",
+            first: { step: "TERMINAL A · the slow script", cmd: "curl -i http://localhost:8080/cgi-bin/slow.py" },
+            step: "TERMINAL B · at once, while A waits",
+            cmd: "curl -i http://localhost:8080/",
+            what: "slow.py sleeps 10 s: it is killed after 5 s (504). Meanwhile the home page arrives at once: the server is not blocked." },
+          { title: "No script left behind", expect: "only the header line", who: "Protocol (CGI) + Core",
+            cmd: "ps --ppid $(pgrep -x webserv) -o pid,stat,cmd",
+            what: "After a CGI (even a killed one): no child process, no zombie (stat Z)." }
+        ]
+      },
+      {
+        id: "core", title: "The front desk", label: "ROOM 02 + 07 · CONNECTIONS",
+        text: "One poll() watches every visitor. A slow visitor must never block the others.",
+        commands: [
+          { title: "Two letters, one connection", expect: "Re-using existing connection", who: "Core",
+            cmd: "curl -v http://localhost:8080/ http://localhost:8080/about.html -o /dev/null -o /dev/null 2>&1 | grep -i -E 're-using|left intact'",
+            what: "Keep-alive: the 2nd request uses the same connection." },
+          { title: "A silent visitor does not block (2 terminals)", expect: "200 at once", who: "Core",
+            first: { step: "TERMINAL A · connect and type nothing", cmd: "nc localhost 8080" },
+            step: "TERMINAL B · while A is silent",
+            cmd: "curl -i http://localhost:8080/",
+            what: "The heart of non-blocking: B is served while A sends nothing." },
+          { title: "A visitor who never finishes", expect: "408 after 60 s", who: "Core",
+            cmd: "(printf 'GET / HTTP/1.1\\r\\nHost: localhost\\r\\n'; sleep 70) | nc localhost 8080",
+            what: "The empty line never comes: after the 60 s timeout the server answers 408 and closes. sleep 70 keeps the connection open (it ends after 70 s)." },
+          { title: "50 visitors at once", expect: "50 200", who: "Core",
+            cmd: 'for i in $(seq 50); do curl -s -o /dev/null -w "%{http_code}\\n" http://localhost:8080/ & done | sort | uniq -c',
+            what: "All 50 are answered, and the server is still running." },
+          { title: "Under load for 30 s (if siege is installed)", expect: "Availability 100 %", who: "Core",
+            cmd: "siege -b -c 25 -t 30s --no-parser http://localhost:8080/",
+            what: "The subject asks for more than 99.5 %. --no-parser: without it, siege also downloads the Google Fonts of the page over https, and its SSL errors have nothing to do with webserv." },
+          { title: "No memory leak", expect: "no leaks are possible", who: "Everyone",
+            cmd: "valgrind --leak-check=full ./webserv default.conf",
+            what: "Send a few requests, then Ctrl+C: everything must be freed." }
+        ]
+      },
+      {
+        id: "startup", title: "Opening the post office", label: "START-UP · CONFIG FILE",
+        text: "A bad config file or a port already taken: a clear message and exit code 1, never a crash.",
+        commands: [
+          { title: "A config file that does not exist", expect: "Error + exit 1", who: "Config",
+            cmd: "./webserv nope.conf; echo \"exit code: $?\"",
+            what: "Error: Config Error: Could not open file: nope.conf" },
+          { title: "A broken config file", expect: "Error + exit 1", who: "Config",
+            cmd: "./webserv tests/configs_bad/unclosed_brace.conf; echo \"exit code: $?\"",
+            what: "Error: Config Error: Expected '}', but found 'EOF'" },
+          { title: "All the bad configs at once", expect: "Passed: 8 · Failed: 0", who: "Config",
+            cmd: "bash tests/test_bad_configs.sh",
+            what: "8 broken configs, each one refused cleanly." },
+          { title: "A port already taken", expect: "Error + exit 1", who: "Core",
+            cmd: "./webserv default.conf; echo \"exit code: $?\"",
+            what: "Run it while the server is already running: Error: bind() failed on 127.0.0.1:8080" }
+        ]
+      },
+      {
+        id: "unit", title: "The workbench", label: "UNIT TESTS · tests/",
+        text: "Each part was also tested alone, without the browser: small programs that call our functions with fake requests and check every answer. The commands count the results, so a KO can't hide in a long output.",
+        commands: [
+          { title: "All 6 at once", expect: "6 × [ OK ] · 131 OK, 0 KO", who: "Everyone",
+            first: { step: "SERVER TERMINAL · Ctrl+C, then (for test_core)", cmd: "./webserv tests/core/test.conf" },
+            step: "2ND TERMINAL",
+            cmd: "make tests",
+            what: "Builds the 6 test programs, runs them, and prints one line each: config 1, core 25, request 7, response 76, CGI 13, delete 9. Without the test.conf server, test_core is skipped (SKIP). The commands below run each program alone, to read the details. Start ./webserv default.conf again after it." },
+          { title: "The request parser alone", expect: "7 -> OK · no KO", who: "Protocol (HTTPRequest)",
+            cmd: "make test_request | grep -o -e '-> OK' -e '-> KO' | sort | uniq -c",
+            what: "tests/http/main_request.cpp: a request given in pieces, Content-Length and chunked bodies, the body size limit (413). Run ./test_request alone to read each test." },
+          { title: "The responses alone", expect: "76 -> OK · no KO", who: "Protocol (buildResponse)",
+            cmd: "make test_response | grep -o -e '-> OK' -e '-> KO' | sort | uniq -c",
+            what: "tests/http/main_response.cpp: status lines, locations, 405 + Allow, 301, ../ (403), GET, index, autoindex, error_page, POST, multipart, DELETE, virtual hosts." },
+          { title: "The CGI alone", expect: "13 -> OK · no KO", who: "Protocol (CGIHandler)",
+            cmd: "make test_cgi | grep -o -e '-> OK' -e '-> KO' | sort | uniq -c",
+            what: "tests/cgi/main_cgi.cpp: the CGI variables, GET and POST, a big body, the Status: header, a broken script (502), a slow one killed." },
+          { title: "DELETE alone", expect: "9 passed, 0 failed", who: "Core (handleDelete)",
+            cmd: "make test_delete | tail -1",
+            what: "tests/http/main_delete.cpp: a file, a missing file (404), a folder, no rights (403)." },
+          { title: "The config parser alone", expect: "[SUCCESS] Parsed 1 server block(s)", who: "Config",
+            cmd: "make test_config | grep -A1 SUCCESS",
+            what: "tests/config/test-config.cpp reads default.conf without starting any server." },
+          { title: "The Core Engine over the network", expect: "25 passed, 0 failed", who: "Core",
+            first: { step: "SERVER TERMINAL · Ctrl+C, then", cmd: "./webserv tests/core/test.conf" },
+            step: "2ND TERMINAL",
+            cmd: "make test_core | tail -1",
+            what: "tests/core/test_core.cpp is a client: keep-alive, requests sent in pieces, slow clients, many at once, a client leaving while its CGI runs. Start ./webserv default.conf again after it." }
+        ]
+      },
+      {
+        id: "configs", title: "Other post offices", label: "CONFIG FILES · configs/",
+        text: "The same server with another config file. In the server terminal, stop the running server first (Ctrl+C), otherwise: bind() failed. Then the curl commands go in the 2nd terminal.",
+        commands: [
+          { title: "Two ports, two sites", expect: "8080: home · 8081: About", who: "Config + Core",
+            first: { step: "SERVER TERMINAL · Ctrl+C, then", cmd: "./webserv configs/multi-port.conf" },
+            step: "2ND TERMINAL",
+            cmd: "curl -s http://localhost:8080/ | grep '<title>'\ncurl -s http://localhost:8081/ | grep '<title>'",
+            what: "One server block per port: 8080 gives index.html, 8081 gives about.html (index of its location)." },
+          { title: "Two names, one port", expect: "one: home · two: About", who: "Protocol (findServer) + Config",
+            first: { step: "SERVER TERMINAL · Ctrl+C, then", cmd: "./webserv configs/virtual-hosts.conf" },
+            step: "2ND TERMINAL",
+            cmd: "curl -s -H 'Host: one.local' http://localhost:8080/ | grep '<title>'\ncurl -s -H 'Host: two.local' http://localhost:8080/ | grep '<title>'",
+            what: "Both servers listen on 8080: the Host header picks the server by its server_name. curl --resolve two.local:8080:127.0.0.1 http://two.local:8080/ does the same." },
+          { title: "An unknown name", expect: "home (the 1st server)", who: "Protocol (findServer) + Config",
+            step: "2ND TERMINAL · server still on configs/virtual-hosts.conf",
+            cmd: "curl -s -H 'Host: nobody.local' http://localhost:8080/ | grep '<title>'",
+            what: "No server_name matches: the first server of the port answers (the default one, like nginx)." },
+          { title: "A smaller body limit", expect: "413 · then 201", who: "Protocol + Config",
+            first: { step: "SERVER TERMINAL · Ctrl+C, then", cmd: "./webserv configs/small-body.conf" },
+            step: "2ND TERMINAL",
+            cmd: "curl -i --data-binary 'hello world' http://localhost:8080/s.txt\ncurl -i --data-binary 'hello' http://localhost:8080/s.txt",
+            what: "client_max_body_size 10: 11 bytes are refused (413), 5 bytes are saved in www/uploads/s.txt (201)." },
+          { title: "No error_page in the config", expect: "404 + a small page", who: "Protocol + Config",
+            first: { step: "SERVER TERMINAL · Ctrl+C, then", cmd: "./webserv configs/no-error-pages.conf" },
+            step: "2ND TERMINAL",
+            cmd: "curl -i http://localhost:8080/nowhere",
+            what: "Without error_page, the server writes its own default page: <h1>404 Not Found</h1>." },
+          { title: "Back to the normal post office", expect: "Listening on 127.0.0.1:8080", who: "Config",
+            first: { step: "SERVER TERMINAL · Ctrl+C, then", cmd: "./webserv default.conf" },
+            step: "2ND TERMINAL",
+            cmd: "curl -s -o /dev/null -w '%{http_code}\\n' http://localhost:8080/",
+            what: "The other rooms of this page use default.conf: start it again after these tests (200)." }
+        ]
+      }
+    ];
+
+
+    // ===== Draw the table of contents and one panel per group =====
+    function drawPage() {
+      const toc = document.getElementById("toc");
+      const box = document.getElementById("groups");
+
+      GROUPS.forEach(function (group) {
+        const link = document.createElement("a");
+        link.href = "#" + group.id;
+        link.textContent = group.title + " (" + group.commands.length + ")";
+        toc.appendChild(link);
+
+        const section = document.createElement("section");
+        section.className = "group";
+        section.id = group.id;
+        section.innerHTML =
+          '<div class="panel">' +
+            '<div class="group-head">' +
+              '<span class="label"></span>' +
+              '<h2></h2>' +
+              '<p></p>' +
+            '</div>' +
+          '</div>';
+        section.querySelector(".label").textContent = group.label;
+        section.querySelector("h2").textContent = group.title;
+        section.querySelector("p").textContent = group.text;
+
+        const panel = section.querySelector(".panel");
+        group.commands.forEach(function (c) {
+          panel.appendChild(drawCommand(c));
+        });
+        box.appendChild(section);
+      });
+    }
+
+    // ===== One command: title, command + Copy, explanation, expected stamp =====
+    // textContent everywhere: the commands contain < > " ' and must stay as they are
+    function drawCommand(c) {
+      const row = document.createElement("div");
+      row.className = "cmd-row";
+      row.innerHTML =
+        '<div>' +
+          '<span class="cmd-title"></span>' +
+          '<div class="cmd-box"><pre></pre><button class="copy" type="button">Copy</button></div>' +
+          '<p class="cmd-what"></p>' +
+          '<span class="cmd-who"></span>' +
+        '</div>' +
+        '<span class="expected"></span>';
+
+      row.querySelector(".cmd-title").textContent = c.title;
+      row.querySelector("pre").textContent = c.cmd;
+      row.querySelector(".cmd-what").textContent = c.what;
+      row.querySelector(".cmd-who").textContent = c.who.toUpperCase();
+      const stamp = row.querySelector(".expected");
+      stamp.textContent = c.soon ? "soon: " + c.expect : c.expect;
+      if (c.soon) stamp.classList.add("soon");
+
+      const button = row.querySelector(".copy");
+      button.addEventListener("click", function () {
+        copyText(c.cmd, button);
+      });
+
+      // Two terminals: the "first" command gets its own box and Copy button,
+      // above the main one, and each box says where to paste it
+      const main = row.querySelector(".cmd-box");
+      if (c.first) {
+        main.before(makeStep(c.first.step), makeBox(c.first.cmd));
+      }
+      if (c.step) {
+        main.before(makeStep(c.step));
+      }
+
+      // "Open": the simple GETs a browser can send (same address, new tab)
+      // "Page": a request a browser can't send, but whose answer uses one of
+      //         our error pages (error_page in the config): shows that page
+      const box = row.querySelector(".cmd-box");
+      if (c.open) box.appendChild(makeLink(c.open, "Open", "Send this request from the browser"));
+      if (c.page) box.appendChild(makeLink(c.page, "Page", "See the error page this answer uses"));
+      return row;
+    }
+
+    // ===== "TERMINAL A · ...": where to paste the box below =====
+    function makeStep(text) {
+      const step = document.createElement("span");
+      step.className = "cmd-step";
+      step.textContent = text;
+      return step;
+    }
+
+    // ===== One more command box with its own Copy button =====
+    function makeBox(cmd) {
+      const box = document.createElement("div");
+      box.className = "cmd-box";
+      box.innerHTML = '<pre></pre><button class="copy" type="button">Copy</button>';
+      box.querySelector("pre").textContent = cmd;
+      const button = box.querySelector(".copy");
+      button.addEventListener("click", function () {
+        copyText(cmd, button);
+      });
+      return box;
+    }
+
+    // ===== A link that looks like the Copy button, opens in a new tab =====
+    function makeLink(address, text, help) {
+      const link = document.createElement("a");
+      link.className = "copy";
+      link.href = address;                   // relative: works on any port
+      link.target = "_blank";
+      link.rel = "noopener";
+      link.title = help;
+      link.textContent = text;
+      return link;
+    }
+
+    // ===== Copy a command =====
+    // navigator.clipboard works on localhost; the textarea is the old way, as a backup
+    function copyText(text, button) {
+      function done() {
+        button.textContent = "Copied";
+        button.classList.add("done");
+        setTimeout(function () {
+          button.textContent = "Copy";
+          button.classList.remove("done");
+        }, 1500);
+      }
+      function oldWay() {
+        const area = document.createElement("textarea");
+        area.value = text;
+        document.body.appendChild(area);
+        area.select();
+        document.execCommand("copy");
+        document.body.removeChild(area);
+        done();
+      }
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).then(done, oldWay);
+      } else {
+        oldWay();
+      }
+    }
+
+    drawPage();
+  </script>
+</body>
+</html>

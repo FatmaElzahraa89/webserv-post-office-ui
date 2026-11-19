@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>webserv Post Office</title>
+
+  <!-- Fonts (we'll make them local later, in step 7) -->
+  <link rel="stylesheet" href="/css/fonts.css">
+
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+  <header class="header">
+    <div class="container header-inner">
+      <a class="brand" href="/">
+        webserv <span class="brand-tag">POST OFFICE</span>
+      </a>
+      <nav class="nav">
+        <a href="/" class="active">Counter</a>
+        <a href="/upload.html">Send a parcel</a>
+        <a href="/delete.html">Mailroom</a>
+        <a href="/cgi.html">Workshop</a>
+        <a href="/tests.html">Inspections</a>
+        <a href="/terminal.html">Terminal</a>
+        <a href="/about.html">About</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="hero container">
+
+    <!-- Left: the text -->
+    <div class="hero-text">
+      <span class="label">HTTP/1.1 · C++98 · 42 LUXEMBOURG</span>
+      <h1>Every request is a letter.<br>
+          <span class="blue">Watch our server deliver it.</span></h1>
+      <p>webserv is an HTTP server we wrote from scratch. Drop a letter in the box
+         below and follow it through the post office: every room is one part of our code.</p>
+      <div class="buttons">
+        <a class="btn" href="#journey">Send a letter →</a>
+        <a class="btn outline" href="/about.html#team">Meet the postmasters</a>
+      </div>
+    </div>
+
+    <!-- Right: the postage stamp -->
+    <div class="hero-stamp">
+      <div class="perf">
+        <div class="stamp">
+          <div class="stamp-top"><span>WEBSERV</span><span>LU · 2026</span></div>
+          <div class="stamp-code">200</div>
+          <div class="stamp-word">DELIVERED</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="journey" class="journey">
+    <div class="container journey-inner">
+
+      <div class="section-head">
+        <span class="label">FLOOR PLAN</span>
+        <h2>The letter's journey</h2>
+        <p>Choose what to send, then post it. The envelope lights up each room it passes.</p>
+      </div>
+
+      <div class="picker">
+        <button class="pick selected" data-kind="get">GET /about.html</button>
+        <button class="pick" data-kind="post">POST /uploads</button>
+        <button class="pick" data-kind="delete">DELETE /uploads/letter.txt</button>
+        <button class="pick" data-kind="cgi">GET /cgi-bin/hello.py</button>
+        <button class="pick" data-kind="notfound">GET /nowhere</button>
+        <button class="send" id="send">Send letter</button>
+      </div>
+      <div id="envelope" class="envelope" aria-hidden="true">
+        <svg width="40" height="28" viewBox="0 0 40 28">
+          <rect x="1.5" y="1.5" width="37" height="25" rx="3" fill="#fff" stroke="#1E2A44" stroke-width="2"/>
+          <path d="M2.5 3 L20 15.5 L37.5 3" fill="none" stroke="#1E2A44" stroke-width="2"/>
+          <rect x="28" y="6" width="7" height="8" fill="#B8321F"/>
+        </svg>
+      </div>
+
+      <!-- Row 1: arrival -->
+      <div class="row-label">ARRIVAL</div>
+      <div class="rooms">
+        <div class="room" data-room="mailbox">
+          <span class="room-n">ROOM 01</span>
+          <h3>Mailbox</h3>
+          <span class="room-code">browser</span>
+          <p>The visitor drops the letter in the box.</p>
+        </div>
+        <div class="link"></div>
+        <div class="room" data-room="desk">
+          <span class="room-n">ROOM 02</span>
+          <h3>Front desk</h3>
+          <span class="room-code">poll() · accept · recv</span>
+          <p>One clerk watches every counter at once.</p>
+        </div>
+        <div class="link"></div>
+        <div class="room" data-room="opening">
+          <span class="room-n">ROOM 03</span>
+          <h3>Opening room</h3>
+          <span class="room-code">HTTP parser</span>
+          <p>The envelope is opened: method, address, headers.</p>
+        </div>
+        <div class="link"></div>
+        <div class="room" data-room="sorting">
+          <span class="room-n">ROOM 04</span>
+          <h3>Sorting room</h3>
+          <span class="room-code">router + config</span>
+          <p>The address is checked against the directory.</p>
+        </div>
+      </div>
+
+    <!-- Row 2: departments -->
+      <div class="row-label">DEPARTMENTS · THE SORTING ROOM PICKS ONE</div>
+      <div class="rooms gap">
+        <div class="room" data-room="archives">
+          <span class="room-n">ROOM 05A</span>
+          <h3>Archives</h3>
+          <span class="room-code">static files</span>
+          <p>The page is copied from the shelves.</p>
+        </div>
+        <div class="room" data-room="parcels">
+          <span class="room-n">ROOM 05B</span>
+          <h3>Parcel room</h3>
+          <span class="room-code">upload · POST</span>
+          <p>The parcel is unpacked and stored.</p>
+        </div>
+        <div class="room" data-room="shredder">
+          <span class="room-n">ROOM 05C</span>
+          <h3>Shredder</h3>
+          <span class="room-code">DELETE</span>
+          <p>The file is destroyed for good.</p>
+        </div>
+        <div class="room" data-room="workshop">
+          <span class="room-n">ROOM 05D</span>
+          <h3>Workshop</h3>
+          <span class="room-code">CGI · fork + execve</span>
+          <p>A script runs and writes the reply.</p>
+        </div>
+        <div class="room" data-room="deadletter">
+          <span class="room-n">ROOM 05E</span>
+          <h3>Dead letter office</h3>
+          <span class="room-code">error page</span>
+          <p>Nobody lives at this address.</p>
+        </div>
+      </div>
+
+      <!-- Row 3: departure -->
+      <div class="row-label">DEPARTURE</div>
+      <div class="rooms">
+        <div class="room" data-room="stamping">
+          <span class="room-n">ROOM 06</span>
+          <h3>Stamping desk</h3>
+          <span class="room-code">response builder</span>
+          <p>The reply gets its postmark.</p>
+        </div>
+        <div class="link"></div>
+        <div class="room" data-room="carrier">
+          <span class="room-n">ROOM 07</span>
+          <h3>Mail carrier</h3>
+          <span class="room-code">send() via poll()</span>
+          <p>The reply is carried back to the visitor.</p>
+        </div>
+        <div class="link"></div>
+        <div class="room end">
+          <span class="room-n">BACK TO</span>
+          <h3>The visitor</h3>
+          <p>The browser opens the reply.</p>
+        </div>
+      </div>
+      
+      <div class="tracking">
+        <div class="tracking-head">
+          <h3>Tracking</h3>
+        </div>
+        <p id="tracking-empty" class="tracking-empty">No letter posted yet. Pick a request and press Send.</p>
+        <ul id="tracking-list"></ul>
+      </div>
+      <div id="postcard" class="postcard">
+        <div class="postcard-text">
+          <span class="row-label">POSTCARD · THE REPLY</span>
+          <p class="postcard-lines" id="postcard-lines">HTTP/1.1 200 OK
+Server: webserv
+To: the visitor</p>
+        </div>
+        <div class="postmark" id="postmark">
+          <span class="postmark-code" id="postmark-code">200</span>
+          <span class="postmark-word" id="postmark-word">DELIVERED</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script src="/js/app.js"></script>
+
+</body>
+</html>

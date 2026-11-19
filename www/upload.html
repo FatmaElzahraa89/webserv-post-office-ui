@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Send a parcel · webserv Post Office</title>
+  <link rel="stylesheet" href="/css/fonts.css">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/pages.css">
+</head>
+<body>
+
+  <!-- ===== Header (the same on every page, only "active" moves) ===== -->
+  <header class="header">
+    <div class="container header-inner">
+      <a class="brand" href="/">webserv <span class="brand-tag">POST OFFICE</span></a>
+      <nav class="nav">
+        <a href="/">Counter</a>
+        <a href="/upload.html" class="active">Send a parcel</a>
+        <a href="/delete.html">Mailroom</a>
+        <a href="/cgi.html">Workshop</a>
+        <a href="/tests.html">Inspections</a>
+        <a href="/terminal.html">Terminal</a>
+        <a href="/about.html">About</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <div class="page-head">
+      <span class="label">POST · /uploads</span>
+      <h1>Send a parcel</h1>
+      <p>Choose a file and send it. It travels as <code>multipart/form-data</code>, and the Parcel room stores it in <code>/uploads</code>.</p>
+    </div>
+
+    <div class="columns">
+
+      <!-- ===== Left: the form ===== -->
+      <form class="panel" id="upload-form">
+        <h2>Your parcel</h2>
+
+        <!-- The <label> IS the drop zone: clicking it opens the file chooser -->
+        <label class="dropzone" id="dropzone">
+          <strong>Click to choose a file</strong>
+          <span>or drag it here</span>
+          <span class="file-name" id="file-name">no file chosen</span>
+          <input type="file" name="file" id="file-input">
+        </label>
+
+        <button class="btn red" type="submit">Send parcel</button>
+        <a class="btn outline small" href="/delete.html">See the mailroom</a>
+      </form>
+
+      <!-- ===== Right: the reply ===== -->
+      <div>
+        <div class="waiting" id="reply-waiting">The reply postcard appears here after you send a parcel.</div>
+
+        <div class="postcard" id="reply">
+          <div class="postcard-text">
+            <span class="row-label">POSTCARD · THE REPLY</span>
+            <p class="postcard-lines"></p>
+          </div>
+          <div class="postmark">
+            <span class="postmark-code"></span>
+            <span class="postmark-word"></span>
+          </div>
+          <pre class="postcard-body"></pre>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <script src="/js/request.js"></script>
+  <script>
+    // ===== The 4 elements we need =====
+    const form      = document.getElementById("upload-form");
+    const fileInput = document.getElementById("file-input");
+    const dropzone  = document.getElementById("dropzone");
+    const fileName  = document.getElementById("file-name");
+
+    // ===== Show the name of the chosen file =====
+    function showFileName() {
+      if (fileInput.files.length > 0) {
+        const file = fileInput.files[0];
+        fileName.textContent = file.name + " · " + Math.round(file.size / 1024) + " KB";
+      }
+    }
+    fileInput.addEventListener("change", showFileName);
+
+    // ===== Drag & drop =====
+    // while a file is over the zone: highlight it
+    dropzone.addEventListener("dragover", function (event) {
+      event.preventDefault();             // allow dropping here
+      dropzone.classList.add("drag");
+    });
+    dropzone.addEventListener("dragleave", function () {
+      dropzone.classList.remove("drag");
+    });
+    // when the file is dropped: put it in the file input
+    dropzone.addEventListener("drop", function (event) {
+      event.preventDefault();             // don't let the browser open the file
+      dropzone.classList.remove("drag");
+      fileInput.files = event.dataTransfer.files;
+      showFileName();
+    });
+
+    // ===== Send =====
+    form.addEventListener("submit", function (event) {
+      event.preventDefault();             // don't leave the page
+
+      if (fileInput.files.length === 0) {
+        fileName.textContent = "please choose a file first";
+        return;
+      }
+
+      // FormData packs the form as multipart/form-data, like a real upload
+      sendLetter("POST", "/uploads", new FormData(form), "reply");
+    });
+  </script>
+</body>
+</html>

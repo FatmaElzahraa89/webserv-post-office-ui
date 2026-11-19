@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Inspections · webserv Post Office</title>
+  <link rel="stylesheet" href="/css/fonts.css">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/pages.css">
+  <style>
+    /* this page only: the checklist takes the full width, the postcard goes below */
+    .columns > .panel { flex-basis: 100%; }
+    /* a small title above each group of tests */
+    .test-group {
+      padding-top: 18px;
+      font-family: var(--font-type);
+      font-weight: 700;
+      font-size: 13px;
+      letter-spacing: .14em;
+      color: var(--stamp);
+    }
+  </style>
+</head>
+<body>
+
+  <header class="header">
+    <div class="container header-inner">
+      <a class="brand" href="/">webserv <span class="brand-tag">POST OFFICE</span></a>
+      <nav class="nav">
+        <a href="/">Counter</a>
+        <a href="/upload.html">Send a parcel</a>
+        <a href="/delete.html">Mailroom</a>
+        <a href="/cgi.html">Workshop</a>
+        <a href="/tests.html" class="active">Inspections</a>
+        <a href="/terminal.html">Terminal</a>
+        <a href="/about.html">About</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <div class="page-head">
+      <span class="label">LIVE INSPECTION</span>
+      <h1>The inspector's checklist</h1>
+      <p>Each line sends a real letter to our post office and checks the postmark it comes back with. Green stamp: correct. Red stamp: something to fix. The whole inspection takes about 15 seconds, because two tests wait for the slow script.</p>
+    </div>
+
+    <div class="columns">
+
+      <!-- ===== The checklist ===== -->
+      <div class="panel">
+        <div class="buttons" style="justify-content: space-between; align-items: center">
+          <span class="score" id="score">— / —</span>
+          <button class="btn red" type="button" onclick="runAll()">Run the inspection</button>
+        </div>
+        <div id="tests"></div>
+      </div>
+
+      <!-- ===== The last reply ===== -->
+      <div>
+        <div class="waiting" id="reply-waiting">The reply of the last letter appears here.</div>
+
+        <div class="postcard" id="reply">
+          <div class="postcard-text">
+            <span class="row-label">POSTCARD · LAST REPLY</span>
+            <p class="postcard-lines"></p>
+          </div>
+          <div class="postmark">
+            <span class="postmark-code"></span>
+            <span class="postmark-word"></span>
+          </div>
+          <pre class="postcard-body"></pre>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <script src="/js/request.js"></script>
+  <script>
+    // Size of the parcel for the "too heavy" test, in MB.
+    // It must be BIGGER than client_max_body_size in the config (10M).
+    const BIG_PARCEL_MB = 15;
+
+    // ===== Small helpers used by the tests =====
+
+    // the Content-Type of a reply starts with this text?
+    function typeIs(r, type) {
+      return (r.headers.get("Content-Type") || "").startsWith(type);
+    }
+
+    // the body of a reply contains this text? (bodyText is kept by request.js)
+    function bodyHas(r, text) {
+      return (r.bodyText || "").includes(text);
+    }
+
+    // a small file for the upload cycle, sent like the "Send a parcel" form does
+    function inspectionParcel() {
+      const form = new FormData();
+      form.append("file", new Blob(["hello inspector"]), "inspection.txt");
+      return form;
+    }
+
+    // ===== The checklist =====
+    // group  : (optional) starts a new group, with this title
+    // method / url : the letter to send
+    // expect : the status codes that count as correct
+    // check  : (optional) an extra test on the reply
+    // body   : (optional) a function that makes the body to send
+    // run    : (optional) a special test with its own code (see "stays open")
+    const TESTS = [
+      { group: "THE COUNTER · STATIC FILES AND ROUTES",
+        title: "The counter is open",          method: "GET",    url: "/",                      expect: [200] },
+      { title: "The stylesheet is text/css",   method: "GET",    url: "/css/style.css",         expect: [200],
+        check: function (r) { return typeIs(r, "text/css"); } },
+      { title: "The shelves can be listed",    method: "GET",    url: "/uploads/",              expect: [200] },
+      { title: "Old address is forwarded",     method: "GET",    url: "/old-page",              expect: [200],
+        check: function (r) { return r.redirected; } },
+
+      { group: "ERRORS · THE RIGHT CODE FOR EVERY MISTAKE",
+        title: "Unknown address → 404",        method: "GET",    url: "/this/does/not/exist",   expect: [404] },
+      { title: "Wrong counter → 405",          method: "DELETE", url: "/index.html",            expect: [405] },
+      { title: "Unknown method",               method: "FOO",    url: "/",                      expect: [405, 501] },
+      { title: "PUT is not done here → 501",   method: "PUT",    url: "/",                      expect: [501] },
+      { title: "Folder without index → 403",   method: "GET",    url: "/errors/",               expect: [403] },
+      { title: "Shred a missing file → 404",   method: "DELETE", url: "/uploads/no-such-file.txt", expect: [404] },
+      { title: "Parcel too heavy → 413",       method: "POST",   url: "/uploads",               expect: [413],
+        body: function () { return new Blob([new Uint8Array(BIG_PARCEL_MB * 1024 * 1024)]); } },
+
+      { group: "PARCELS · ONE FILE, FROM START TO END",
+        title: "Send a parcel → 201",          method: "POST",   url: "/uploads",               expect: [201],
+        body: inspectionParcel },
+      { title: "Read it back: same text",      method: "GET",    url: "/uploads/inspection.txt", expect: [200],
+        check: function (r) { return bodyHas(r, "hello inspector"); } },
+      { title: "Shred it → 200",               method: "DELETE", url: "/uploads/inspection.txt", expect: [200, 204] },
+      { title: "It's gone → 404",              method: "GET",    url: "/uploads/inspection.txt", expect: [404] },
+
+      { group: "THE WORKSHOP · CGI SCRIPTS",
+        title: "A note: the script reads it",  method: "GET",    url: "/cgi-bin/hello.py?name=inspector", expect: [200],
+        check: function (r) { return bodyHas(r, "inspector"); } },
+      { title: "A letter: the script reads it", method: "POST",  url: "/cgi-bin/form.py",       expect: [200],
+        body: function () { return "hello=world"; },
+        check: function (r) { return bodyHas(r, "hello=world"); } },
+      { title: "A script that doesn't exist → 404", method: "GET", url: "/cgi-bin/nope.py",     expect: [404] },
+      { title: "A script that's too slow → 504",    method: "GET", url: "/cgi-bin/slow.py",     expect: [504] },
+
+      { group: "THE FRONT DESK · NOBODY WAITS IN LINE",
+        title: "The post office stays open",   method: "GET",    url: "/ while slow.py runs",   expect: [200],
+        run: staysOpen }
+    ];
+
+    // ===== A special test: "the post office stays open" =====
+    // 1. start slow.py (it takes 5+ seconds), WITHOUT waiting for it
+    // 2. half a second later, ask for the home page and measure the time
+    // 3. correct if the home page arrives in less than 2 seconds:
+    //    the slow script must not block the other visitors (one poll() for all)
+    function staysOpen() {
+      const slow = fetch("/cgi-bin/slow.py").catch(function () {});   // 1. not waited for
+
+      return new Promise(function (resolve) { setTimeout(resolve, 500); })   // 2. wait 0.5 s
+        .then(function () {
+          const start = performance.now();
+          return sendLetter("GET", "/", null, "reply").then(function (r) {
+            const ms = Math.round(performance.now() - start);
+            const ok = !!r && r.status === 200 && ms < 2000;
+            // 3. wait for slow.py to end, so it doesn't disturb the next run
+            return slow.then(function () {
+              return { ok: ok, label: (r ? r.status : "no answer") + " in " + ms + " ms" };
+            });
+          });
+        });
+    }
+
+    // ===== Draw one line per test (and a title for each group) =====
+    function drawTests() {
+      const box = document.getElementById("tests");
+
+      TESTS.forEach(function (test, i) {
+        if (test.group) {
+          const title = document.createElement("div");
+          title.className = "test-group";
+          title.textContent = test.group;
+          box.appendChild(title);
+        }
+
+        const row = document.createElement("div");
+        row.className = "test-row";
+        row.innerHTML =
+          '<span class="method">' + test.method + '</span>' +
+          '<span>' + test.title + '<small>' + test.url + '</small></span>' +
+          '<span class="expect">expect ' + test.expect.join(" or ") + '</span>' +
+          '<span class="result" id="result-' + i + '">·</span>';
+        box.appendChild(row);
+      });
+    }
+
+    // ===== Run one test =====
+    // returns a "promise" of true (correct) or false (wrong)
+    function runTest(i) {
+      const test = TESTS[i];
+      const cell = document.getElementById("result-" + i);
+      cell.className = "result";
+      cell.textContent = "…";
+
+      // a special test has its own code: it answers { ok, label }
+      if (test.run) {
+        return test.run().then(function (result) {
+          cell.className = result.ok ? "result pass" : "result fail";
+          cell.textContent = (result.ok ? "✓ " : "✗ ") + result.label;
+          return result.ok;
+        });
+      }
+
+      let body = null;
+      if (test.body) {
+        body = test.body();
+      }
+
+      return sendLetter(test.method, test.url, body, "reply").then(function (response) {
+        let ok = false;
+        if (response) {
+          ok = test.expect.includes(response.status);   // is the code one we expect?
+          if (ok && test.check) {
+            ok = test.check(response);                    // and the extra check?
+          }
+        }
+
+        cell.className = ok ? "result pass" : "result fail";
+        cell.textContent = (ok ? "✓ " : "✗ ") + (response ? response.status : "no answer");
+        return ok;
+      });
+    }
+
+    // ===== Run all the tests, one after the other =====
+    function runAll() {
+      const score = document.getElementById("score");
+      let passed = 0;
+      let i = 0;
+
+      function next() {
+        if (i >= TESTS.length) {                       // all done
+          score.textContent = passed + " / " + TESTS.length + " correct";
+          return;
+        }
+        score.textContent = "checking " + (i + 1) + " / " + TESTS.length + "…";
+        runTest(i).then(function (ok) {
+          if (ok) passed = passed + 1;
+          i = i + 1;
+          next();                                      // then the next one
+        });
+      }
+
+      next();
+    }
+
+    drawTests();
+  </script>
+</body>
+</html>
