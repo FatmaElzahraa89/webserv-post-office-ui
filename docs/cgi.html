@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script src="js/demo.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Workshop · webserv Post Office</title>
+  <link rel="stylesheet" href="css/fonts.css">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/pages.css">
+</head>
+<body>
+
+  <header class="header">
+    <div class="container header-inner">
+      <a class="brand" href="./">webserv <span class="brand-tag">POST OFFICE</span></a>
+      <nav class="nav">
+        <a href="./">Counter</a>
+        <a href="upload.html">Send a parcel</a>
+        <a href="delete.html">Mailroom</a>
+        <a href="cgi.html" class="active">Workshop</a>
+        <a href="tests.html">Inspections</a>
+        <a href="terminal.html">Terminal</a>
+        <a href="about.html">About</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <div class="page-head">
+      <span class="label">CGI · /cgi-bin/</span>
+      <h1>The workshop</h1>
+      <p>Here the letter is not copied from a shelf: a Python script <strong>writes the reply</strong>. The server runs it with <code>fork()</code> + <code>execve()</code> and sends back what the script prints.</p>
+    </div>
+
+    <div class="columns">
+
+      <!-- ===== Left: three jobs for the workshop ===== -->
+      <div style="display: flex; flex-direction: column; gap: 20px">
+
+        <div class="panel">
+          <span class="label">GET · QUERY STRING</span>
+          <h2>A note on the envelope</h2>
+          <p>Your text goes into the address, after the <code>?</code>. The script reads it from <code>QUERY_STRING</code>.</p>
+          <label for="name">YOUR NAME</label>
+          <input type="text" id="name" value="evaluator">
+          <div class="buttons">
+            <button class="btn red" type="button" onclick="runGet()">Run hello.py</button>
+            <button class="btn outline" type="button" onclick="openGet()">Open the page ↗</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <span class="label">POST · BODY</span>
+          <h2>A letter inside the envelope</h2>
+          <p>Your text goes in the body. The script reads it from <code>stdin</code>.</p>
+          <label for="body">YOUR LETTER</label>
+          <textarea id="body" rows="2">message=Hello from the browser</textarea>
+          <div class="buttons">
+            <button class="btn red" type="button" onclick="runPost()">Run form.py</button>
+            <button class="btn outline" type="button" onclick="openPost()">Open the page ↗</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <span class="label">TIMEOUT · SLOW SCRIPT</span>
+          <h2>A very slow worker</h2>
+          <p><code>slow.py</code> sleeps 10 seconds. While it works, open another page: the post office must stay open for other visitors.</p>
+          <button class="btn outline" type="button" onclick="sendLetter('GET', '/cgi-bin/slow.py', null, 'reply')">Run slow.py</button>
+        </div>
+
+      </div>
+
+      <!-- ===== Right: the reply ===== -->
+      <div>
+        <div class="waiting" id="reply-waiting">The script's reply appears here.</div>
+
+        <div class="postcard" id="reply">
+          <div class="postcard-text">
+            <span class="row-label">POSTCARD · WRITTEN BY THE SCRIPT</span>
+            <p class="postcard-lines"></p>
+          </div>
+          <div class="postmark">
+            <span class="postmark-code"></span>
+            <span class="postmark-word"></span>
+          </div>
+          <pre class="postcard-body"></pre>
+        </div>
+      </div>
+
+    </div>
+    <!-- ===== BONUS: two CGI types + cookies and sessions ===== -->
+    <section class="bonus">
+
+      <div class="bonus-head">
+        <span class="bonus-stamp">BONUS</span>
+        <span class="label">COOKIES · SESSIONS · TWO CGI TYPES</span>
+        <h2>The special counter</h2>
+        <p>Two extra services of the post office: the same letter written by two different languages, and a clerk who <strong>remembers you</strong> thanks to a cookie.</p>
+      </div>
+
+      <div class="bonus-grid">
+
+        <!-- 1. Two CGI types: python3 and bash -->
+        <div class="panel">
+          <span class="label">CGI · .py AND .sh</span>
+          <h2>Two clerks, two languages</h2>
+          <p>The same page, written once by <code>python3</code> and once by <code>bash</code>. The config picks the program by the file's extension (<code>cgi_pass</code>).</p>
+          <div class="buttons">
+            <button class="btn red small" type="button" onclick="sendLetter('GET', '/cgi-bin/hello.py?name=python', null, 'bonus')">Run hello.py</button>
+            <button class="btn red small" type="button" onclick="sendLetter('GET', '/cgi-bin/hello.sh?name=bash', null, 'bonus')">Run hello.sh</button>
+            <a class="btn outline small" href="cgi-bin/hello.sh?name=bash" target="_blank">Open hello.sh ↗</a>
+          </div>
+        </div>
+
+        <!-- 2. Cookies + session: the visit counter -->
+        <div class="panel">
+          <span class="label">COOKIE · SESSION</span>
+          <h2>The clerk remembers you</h2>
+          <p>The first visit, <code>session.py</code> gives your browser a cookie (<code>Set-Cookie</code>). After that, the browser shows it at every visit (<code>Cookie</code>), and the clerk counts: visit #2, #3...</p>
+          <div class="buttons">
+            <button class="btn red small" type="button" onclick="visit('/cgi-bin/session.py')">Visit the counter</button>
+            <a class="btn outline small" href="cgi-bin/session.py" target="_blank">Open the page ↗</a>
+          </div>
+        </div>
+
+        <!-- 3. Logout: the session ends -->
+        <div class="panel">
+          <span class="label">LOGOUT</span>
+          <h2>Forget me</h2>
+          <p>The clerk throws away your file and your cookie. The next visit counts from 1 again.</p>
+          <div class="buttons">
+            <button class="btn outline small" type="button" onclick="visit('/cgi-bin/session.py?logout=1')">Forget me</button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- what is in the browser's pocket right now -->
+      <p class="cookie-jar">COOKIE IN YOUR BROWSER: <span id="cookie-now">-</span></p>
+
+      <!-- the reply of the bonus buttons -->
+      <div class="waiting" id="bonus-waiting">The reply of the special counter appears here.</div>
+      <div class="postcard" id="bonus">
+        <div class="postcard-text">
+          <span class="row-label">POSTCARD · SPECIAL COUNTER</span>
+          <p class="postcard-lines"></p>
+        </div>
+        <div class="postmark">
+          <span class="postmark-code"></span>
+          <span class="postmark-word"></span>
+        </div>
+        <pre class="postcard-body"></pre>
+      </div>
+
+    </section>
+
+  </main>
+
+  <script src="js/request.js"></script>
+  <script>
+    // GET: the name goes into the URL, after "?"
+    // encodeURIComponent turns spaces and special letters into URL-safe text
+    function runGet() {
+      const name = document.getElementById("name").value;
+      sendLetter("GET", "/cgi-bin/hello.py?name=" + encodeURIComponent(name), null, "reply");
+    }
+
+    // Open hello.py as a real page, in a new tab, with the name typed above
+    function openGet() {
+      const name = document.getElementById("name").value;
+      window.open("/cgi-bin/hello.py?name=" + encodeURIComponent(name), "_blank");
+    }
+
+    // POST: the text goes in the body of the request
+    function runPost() {
+      const body = document.getElementById("body").value;
+      sendLetter("POST", "/cgi-bin/form.py", body, "reply");
+    }
+
+    // Send the letter to form.py with POST, and show the page it writes in a new tab
+    function openPost() {
+      const body = document.getElementById("body").value;
+
+      // 1. open the new tab NOW, during the click (otherwise the browser blocks it)
+      const tab = window.open("", "_blank");
+
+      // 2. send the letter, 3. write the script's reply into the tab
+      fetch("/cgi-bin/form.py", { method: "POST", body: body })
+        .then(function (response) { return response.text(); })
+        .then(function (html) {
+          tab.document.open();
+          tab.document.write(html);
+          tab.document.close();
+        })
+        .catch(function () {
+          tab.document.write("<p>No answer: is the server running?</p>");
+        });
+    }
+    // ===== BONUS =====
+    // The browser keeps the cookie and sends it back by itself at every
+    // request to our server: we only show what is in its pocket now.
+    function showCookie() {
+      document.getElementById("cookie-now").textContent = document.cookie || "(none)";
+    }
+
+    // Visit the counter (or "Forget me"), then show the cookie again
+    function visit(url) {
+      sendLetter("GET", url, null, "bonus").then(showCookie);
+    }
+
+    showCookie();
+  </script>
+</body>
+</html>

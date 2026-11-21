@@ -1,0 +1,288 @@
+/* =========================================================
+   pages.css: styles for the inner pages
+   (Send a parcel, Mailroom, Workshop, Inspections, About)
+
+   These pages load TWO stylesheets:
+     1. style.css  → colors, fonts, header, postcard (from the home page)
+     2. pages.css  → this file: only what the inner pages need
+   ========================================================= */
+
+
+/* ===== 1. Page title (top of every inner page) ===== */
+.page-head {
+  padding-top: 56px;
+  padding-bottom: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.page-head h1 {
+  margin: 0;
+  font-family: var(--font-title);
+  font-weight: 800;
+  font-size: clamp(36px, 5vw, 56px);
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+}
+.page-head p {
+  margin: 0;
+  max-width: 640px;
+  color: var(--muted);
+  font-size: 17px;
+  line-height: 1.6;
+}
+
+
+/* small code words inside sentences, like <code>poll()</code> */
+code {
+  font-family: var(--font-type);
+  font-size: .92em;
+  background: var(--paper-dark);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+
+/* ===== 2. Two columns: the form on the left, the reply on the right ===== */
+.columns {
+  display: flex;
+  flex-wrap: wrap;          /* on a phone: one under the other */
+  gap: 24px;
+  align-items: flex-start;
+  padding-bottom: 72px;
+}
+.columns > * {
+  flex: 1 1 380px;          /* each column at least 380px, then wrap */
+  min-width: 0;
+}
+
+
+/* ===== 3. A paper panel (like a form at the post office counter) ===== */
+.panel {
+  background: var(--card);
+  border: 1.5px solid #CDBF9F;
+  border-radius: 12px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.panel h2 {
+  margin: 0;
+  font-family: var(--font-title);
+  font-weight: 800;
+  font-size: 22px;
+}
+.panel p { margin: 0; color: var(--muted); font-size: 15px; line-height: 1.5; }
+
+
+/* ===== 4. Form fields ===== */
+label {
+  font-family: var(--font-type);
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: .12em;
+  color: var(--muted);
+}
+input[type="text"],
+textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px;
+  border: 1.5px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--ink);
+  font-family: var(--font-type);
+  font-size: 15px;
+}
+input[type="text"]:focus,
+textarea:focus {
+  outline: 2px solid var(--ink-blue);   /* blue ring when you type */
+  border-color: transparent;
+}
+
+/* a <button> that looks like the .btn links of the home page */
+button.btn {
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 16px;
+  align-self: flex-start;
+}
+button.btn.red { background: var(--stamp); color: #fff; }
+.panel > .btn { align-self: flex-start; } /* buttons keep their own width in a panel */
+.btn.small { min-height: 36px; padding: 0 14px; font-size: 14px; }
+
+
+/* ===== 5. The parcel drop zone (Send a parcel page) ===== */
+.dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 36px 20px;
+  border: 2px dashed var(--line);     /* dashed = "put your parcel here" */
+  border-radius: 12px;
+  background: #fff;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color .2s, background .2s;
+}
+.dropzone:hover,
+.dropzone.drag {                       /* .drag is added by JS while dragging */
+  border-color: var(--stamp);
+  background: #FFF8F3;
+}
+.dropzone {                            /* the drop zone is a <label>, but it must not */
+  font-family: var(--font-body);       /* look like the small typewriter labels */
+  letter-spacing: normal;
+  color: var(--ink);
+}
+.dropzone input { display: none; }     /* hide the ugly default file button */
+.dropzone strong { font-family: var(--font-title); font-size: 20px; }
+.dropzone span { color: var(--muted); font-size: 14px; }
+.dropzone .file-name { font-family: var(--font-type); color: var(--ink-blue); }
+
+
+/* ===== 6. The list of files (Mailroom page) ===== */
+.file-list { list-style: none; margin: 0; padding: 0; }
+.file-list li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px dashed #CDBF9F;
+}
+.file-list li:last-child { border-bottom: none; }
+.file-list .name {
+  flex: 1;                             /* the name takes the free space */
+  font-family: var(--font-type);
+  overflow: hidden;
+  text-overflow: ellipsis;             /* very long names end with "…" */
+}
+.empty { color: var(--muted); font-style: italic; }
+
+
+/* ===== 7. The reply postcard on inner pages =====
+   (.postcard and .postmark come from style.css; here we only add
+   the "body" box that shows what the server sent back)            */
+.columns .postcard { margin-top: 0; }
+.postcard-body {
+  width: 100%;
+  margin: 0;
+  max-height: 240px;
+  overflow: auto;                      /* scroll if the body is long */
+  padding: 12px;
+  background: var(--card);
+  border: 1px dashed #CDBF9F;
+  border-radius: 8px;
+  font-family: var(--font-type);
+  font-size: 13px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.waiting {                             /* the empty box before any reply */
+  min-height: 220px;
+  border: 2px dashed var(--line);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  text-align: center;
+  color: var(--muted);
+}
+
+
+/* ===== 8. Inspections (the test list) ===== */
+.test-row {
+  display: grid;
+  grid-template-columns: 90px 1fr 120px 150px;   /* method · title · expected · result */
+  gap: 12px;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px dashed #CDBF9F;
+}
+.test-row:last-child { border-bottom: none; }
+.method {
+  font-family: var(--font-type);
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--ink-blue);
+}
+.test-row small { display: block; color: var(--muted); font-family: var(--font-type); font-size: 13px; }
+.expect { font-family: var(--font-type); font-size: 14px; color: var(--muted); }
+.result {
+  font-family: var(--font-type);
+  font-weight: 700;
+  font-size: 14px;
+  text-align: center;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 2px solid transparent;
+}
+.result.pass { color: #1F7A5A; border-color: #1F7A5A; transform: rotate(-3deg); }  /* green stamp */
+.result.fail { color: var(--stamp); border-color: var(--stamp); transform: rotate(3deg); } /* red stamp */
+.score {
+  font-family: var(--font-title);
+  font-weight: 800;
+  font-size: 28px;
+}
+
+
+/* ===== 10. Bonus: the special counter (Workshop page) ===== */
+.bonus {
+  border-top: 2px dashed var(--line);   /* a new counter, under the main one */
+  padding-top: 48px;
+  padding-bottom: 72px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+.bonus-head {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.bonus-head h2 {
+  margin: 0;
+  font-family: var(--font-title);
+  font-weight: 800;
+  font-size: clamp(28px, 4vw, 40px);
+  letter-spacing: -0.02em;
+}
+.bonus-head p { margin: 0; max-width: 640px; color: var(--muted); line-height: 1.6; }
+.bonus-stamp {                          /* a red rubber stamp, like on the error pages */
+  align-self: flex-start;
+  padding: 4px 12px;
+  border: 3px double var(--stamp);
+  border-radius: 6px;
+  color: var(--stamp);
+  font-family: var(--font-type);
+  font-weight: 700;
+  letter-spacing: .14em;
+  transform: rotate(-4deg);
+}
+.bonus-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));  /* 3 cards, or 1 per row on a phone */
+  gap: 20px;
+}
+.cookie-jar {
+  margin: 0;
+  font-family: var(--font-type);
+  font-size: 14px;
+  letter-spacing: .06em;
+  color: var(--muted);
+}
+.cookie-jar span { color: var(--ink-blue); font-weight: 700; word-break: break-all; }
+.bonus .postcard { margin-top: 0; }
+
+
+/* ===== 9. Phones ===== */
+@media (max-width: 700px) {
+  .test-row { grid-template-columns: 64px 1fr; }  /* method + title, then expect + result below */
+  button.btn { align-self: stretch; justify-content: center; }
+}

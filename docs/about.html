@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script src="js/demo.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>About · webserv Post Office</title>
+  <link rel="stylesheet" href="css/fonts.css">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/pages.css">
+</head>
+<body>
+
+  <header class="header">
+    <div class="container header-inner">
+      <a class="brand" href="./">webserv <span class="brand-tag">POST OFFICE</span></a>
+      <nav class="nav">
+        <a href="./">Counter</a>
+        <a href="upload.html">Send a parcel</a>
+        <a href="delete.html">Mailroom</a>
+        <a href="cgi.html">Workshop</a>
+        <a href="tests.html">Inspections</a>
+        <a href="terminal.html">Terminal</a>
+        <a href="about.html" class="active">About</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <div class="page-head">
+      <span class="label">ABOUT</span>
+      <h1>How our post office works</h1>
+      <p>webserv is an HTTP/1.1 server written in C++98 for the 42 Common Core. One clerk at the front desk, a single <code>poll()</code> loop, watches every visitor at once: no threads, and nobody waits in line.</p>
+    </div>
+
+    <!-- ===== The rooms = the parts of our code ===== -->
+    <div class="row-label">THE ROOMS AND THE CODE BEHIND THEM</div>
+    <div class="rooms gap" style="margin-top: 12px">
+      <div class="room">
+        <span class="room-n">ROOM 02 + 07</span>
+        <h3>Front desk &amp; Mail carrier</h3>
+        <span class="room-code">Core Engine</span>
+        <p>Sockets, the <code>poll()</code> event loop, accepting visitors, reading requests and sending replies without ever blocking.</p>
+      </div>
+      <div class="room">
+        <span class="room-n">ROOM 03 + 05 + 06</span>
+        <h3>Opening room, Workshop &amp; Stamping desk</h3>
+        <span class="room-code">Protocol &amp; CGI</span>
+        <p>Reads the HTTP request, runs CGI scripts, and builds the reply with the right status code.</p>
+      </div>
+      <div class="room">
+        <span class="room-n">ROOM 04</span>
+        <h3>Sorting room</h3>
+        <span class="room-code">Config &amp; Infra</span>
+        <p>Reads the config file: ports, routes, allowed methods, size limits and error pages. It decides where every letter goes.</p>
+      </div>
+    </div>
+
+    <!-- ===== Staff ===== -->
+    <div class="row-label" id="team" style="margin-top: 40px">THE POSTMASTERS</div>
+    <div class="buttons" style="margin-top: 12px; gap: 20px">
+      <div class="perf" style="flex: 1 1 260px; transform: rotate(-1.5deg)">
+        <div class="panel" style="height: 100%; box-sizing: border-box">
+          <span class="label">CORE ENGINE</span>
+          <h2>fabdelba</h2>
+          <p>Front desk and Mail carrier.</p>
+        </div>
+      </div>
+      <div class="perf" style="flex: 1 1 260px; transform: rotate(1deg)">
+        <div class="panel" style="height: 100%; box-sizing: border-box">
+          <span class="label">PROTOCOL &amp; CGI</span>
+          <h2>smetz</h2>
+          <p>Opening room, Workshop and Stamping desk.</p>
+        </div>
+      </div>
+      <div class="perf" style="flex: 1 1 260px; transform: rotate(-0.5deg)">
+        <div class="panel" style="height: 100%; box-sizing: border-box">
+          <span class="label">CONFIG &amp; INFRA</span>
+          <h2>dvogli</h2>
+          <p>Sorting room.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== Key facts ===== -->
+    <div class="panel" style="margin: 40px 0 72px">
+      <h2>What our post office can do</h2>
+      <ul style="margin: 0; padding-left: 20px; line-height: 1.9; color: var(--muted)">
+        <li>Methods <code>GET</code>, <code>POST</code> and <code>DELETE</code></li>
+        <li>One <code>poll()</code> for every socket and every CGI pipe</li>
+        <li>Static files, uploads, directory listing, redirects and custom error pages</li>
+        <li>CGI scripts in Python, with a timeout for slow scripts</li>
+        <li>Ports, routes, methods and size limits from an NGINX-style config file</li>
+      </ul>
+    </div>
+
+  </main>
+</body>
+</html>

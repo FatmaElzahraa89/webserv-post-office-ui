@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script src="js/demo.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Mailroom · webserv Post Office</title>
+  <link rel="stylesheet" href="css/fonts.css">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/pages.css">
+</head>
+<body>
+
+  <header class="header">
+    <div class="container header-inner">
+      <a class="brand" href="./">webserv <span class="brand-tag">POST OFFICE</span></a>
+      <nav class="nav">
+        <a href="./">Counter</a>
+        <a href="upload.html">Send a parcel</a>
+        <a href="delete.html" class="active">Mailroom</a>
+        <a href="cgi.html">Workshop</a>
+        <a href="tests.html">Inspections</a>
+        <a href="terminal.html">Terminal</a>
+        <a href="about.html">About</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <div class="page-head">
+      <span class="label">GET + DELETE · /uploads/</span>
+      <h1>The mailroom</h1>
+      <p>Every parcel stored on the server. The list comes from the server's own <code>autoindex</code> page. Press <strong>Shred</strong> to send a real <code>DELETE</code>.</p>
+    </div>
+
+    <div class="columns">
+
+      <!-- ===== Left: the list of files ===== -->
+      <div class="panel">
+        <div class="buttons" style="justify-content: space-between; align-items: center">
+          <h2>Shelves · /uploads/</h2>
+          <button class="btn outline small" type="button" onclick="loadFiles()">Refresh</button>
+        </div>
+
+        <ul class="file-list" id="files">
+          <li class="empty">Loading…</li>
+        </ul>
+
+        <label for="manual">OR SHRED ANY ADDRESS BY HAND</label>
+        <input type="text" id="manual" value="/uploads/letter.txt">
+        <button class="btn red" type="button" onclick="shred(document.getElementById('manual').value)">Send DELETE</button>
+      </div>
+
+      <!-- ===== Right: the reply ===== -->
+      <div>
+        <div class="waiting" id="reply-waiting">The reply postcard appears here after you shred a file.</div>
+
+        <div class="postcard" id="reply">
+          <div class="postcard-text">
+            <span class="row-label">POSTCARD · THE REPLY</span>
+            <p class="postcard-lines"></p>
+          </div>
+          <div class="postmark">
+            <span class="postmark-code"></span>
+            <span class="postmark-word"></span>
+          </div>
+          <pre class="postcard-body"></pre>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <script src="js/request.js"></script>
+  <script>
+    // ===== Read the list of files from the server =====
+    // 1. ask the server for /uploads/ (its autoindex page, in HTML)
+    // 2. find every link <a href="..."> in that page
+    // 3. build our own list, with a "Shred" button for each file
+    function loadFiles() {
+      const list = document.getElementById("files");
+      list.innerHTML = '<li class="empty">Loading…</li>';
+
+      fetch("/uploads/")
+        .then(function (response) {
+          if (!response.ok) {
+            throw new Error("the server answered " + response.status);
+          }
+          return response.text();
+        })
+        .then(function (html) {
+          // turn the HTML text into a real page we can search in
+          // No link to the parent folder ("../") = this is not the server's listing:
+          // the folder has an index.html, and the server shows it instead (like nginx).
+          if (!html.includes('href="../"')) {
+            list.innerHTML =
+              '<li class="empty">This folder contains an index.html, so the server shows that page ' +
+              'instead of the list (like nginx). Shred <strong>/uploads/index.html</strong> below to see the list again.</li>';
+            document.getElementById("manual").value = "/uploads/index.html";
+            return;
+          }
+          const page = new DOMParser().parseFromString(html, "text/html");
+          const links = page.querySelectorAll("a");
+
+          list.innerHTML = "";
+
+          links.forEach(function (link) {
+            const href = link.getAttribute("href");
+
+            // skip the "parent folder" link and folders (they end with /)
+            // skip: the parent folder, sub-folders, anchors (#...),
+            // absolute links (/... or http://...): only real file names stay
+            if (!href || href === "../" || href.endsWith("/") ||
+                href.startsWith("#") || href.startsWith("/") || href.includes("://")) {
+              return;
+            }
+
+            const name = href.split("/").pop();       // "uploads/a.txt" → "a.txt"
+            const path = "/uploads/" + name;
+
+            const li = document.createElement("li");
+            li.innerHTML =
+              '<span class="name"></span>' +
+              '<a class="btn outline small" target="_blank">Open</a>' +
+              '<button class="btn red small" type="button">Shred</button>';
+
+            // put the name and the link in with textContent / setAttribute:
+            // a file name could contain HTML, so we never paste it as HTML
+            li.querySelector(".name").textContent = decodeURIComponent(name);
+            li.querySelector("a").setAttribute("href", path);
+
+            // the Shred button of THIS line deletes THIS file
+            li.querySelector("button").addEventListener("click", function () {
+              shred(path);
+            });
+
+            list.appendChild(li);
+          });
+
+          if (list.children.length === 0) {
+            list.innerHTML = '<li class="empty">The shelves are empty. <a href="upload.html">Send a parcel</a>.</li>';
+          }
+        })
+        .catch(function (error) {
+          list.innerHTML = '<li class="empty">Could not read the list: ' + error.message + '</li>';
+        });
+    }
+
+    // ===== Delete one file, then refresh the list =====
+    function shred(path) {
+      sendLetter("DELETE", path.trim(), null, "reply").then(loadFiles);
+    }
+
+    // load the list as soon as the page opens
+    loadFiles();
+  </script>
+</body>
+</html>

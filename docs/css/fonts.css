@@ -1,0 +1,53 @@
+/* =========================================================
+   fonts.css: the 3 fonts of the post office, served by OUR server
+   (before: loaded from fonts.googleapis.com over the internet).
+
+   Why local:
+     - the site looks right even without internet
+     - siege on a page does not try to reach Google over https
+       (that gave the SSL errors that had nothing to do with webserv)
+
+   The files are in /fonts/ (SIL Open Font License: free to share,
+   the license texts are next to them).
+   ========================================================= */
+
+/* big titles */
+@font-face {
+  font-family: "Bricolage Grotesque";
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+  src: url("../fonts/bricolage-grotesque-latin-800-normal.woff2") format("woff2");
+}
+
+/* typewriter: labels, stamps, code */
+@font-face {
+  font-family: "Courier Prime";
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  src: url("../fonts/courier-prime-latin-400-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Courier Prime";
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+  src: url("../fonts/courier-prime-latin-700-normal.woff2") format("woff2");
+}
+
+/* normal text */
+@font-face {
+  font-family: "Inter";
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  src: url("../fonts/inter-latin-400-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Inter";
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+  src: url("../fonts/inter-latin-600-normal.woff2") format("woff2");
+}

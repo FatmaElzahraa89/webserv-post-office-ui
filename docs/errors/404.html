@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script src="../js/demo.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>404 Not Found · webserv Post Office</title>
+  <link rel="stylesheet" href="../css/fonts.css">
+
+  <!-- The CSS is INSIDE this page on purpose:
+       an error page must still look right even if /css/style.css can't be served. -->
+  <style>
+    body {
+      margin: 0; min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      padding: 24px; box-sizing: border-box;
+      background: #F2E8D5; color: #1E2A44;
+      font-family: "Inter", system-ui, sans-serif;
+    }
+    /* the returned letter */
+    .letter {
+      position: relative;
+      width: 100%; max-width: 560px; box-sizing: border-box;
+      padding: 44px 40px 36px;
+      background: #FBF6EA;
+      border: 1.5px solid #CDBF9F; border-radius: 12px;
+      box-shadow: 0 18px 40px -20px rgba(30, 42, 68, .5);
+      transform: rotate(-1deg);
+    }
+    .code {
+      font-family: "Bricolage Grotesque", sans-serif; font-weight: 800;
+      font-size: 120px; line-height: .9; letter-spacing: -0.04em;
+      color: #2347A6;
+    }
+    /* the post office name of this error, in typewriter letters */
+    .postal {
+      margin: -2px 0 14px;
+      font-family: "Courier Prime", monospace; font-weight: 700;
+      font-size: 15px; letter-spacing: .18em;
+      color: #B8321F;
+    }
+    h1 { margin: 14px 0 10px; font-family: "Bricolage Grotesque", sans-serif; font-weight: 800; font-size: 30px; }
+    p  { margin: 0 0 28px; color: #5A5040; line-height: 1.6; }
+    a  {
+      display: inline-flex; align-items: center; min-height: 48px; padding: 0 22px;
+      border-radius: 10px; background: #1E2A44; color: #FBF6EA;
+      font-weight: 600; text-decoration: none;
+    }
+    /* the red rubber stamp across the corner */
+    .stamp {
+      position: absolute; top: 34px; right: 28px;
+      padding: 8px 14px;
+      border: 4px double #B8321F; border-radius: 6px;
+      color: #B8321F;
+      font-family: "Courier Prime", monospace; font-weight: 700;
+      font-size: 15px; letter-spacing: .12em;
+      transform: rotate(12deg);
+    }
+    small {
+      display: block; margin-top: 30px;
+      font-family: "Courier Prime", monospace; font-size: 13px; color: #5A5040;
+    }
+  </style>
+</head>
+<body>
+  <main class="letter">
+    <div class="stamp">RETURN TO SENDER</div>
+    <div class="code">404</div>
+    <h1>Not Found</h1>
+    <div class="postal">ADDRESS UNKNOWN</div>
+    <p>Nobody lives at this address. The page or file doesn't exist on our server.</p>
+    <a href="../">Back to the counter</a>
+    <small>webserv post office · 42 Luxembourg</small>
+  </main>
+</body>
+</html>

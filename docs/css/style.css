@@ -1,0 +1,444 @@
+/* ===== 1. The palette: a real post office ===== */
+:root {
+  --paper:      #F2E8D5;   /* kraft paper: the background */
+  --paper-dark: #E6D9BD;   /* slightly darker paper */
+  --card:       #FBF6EA;   /* fresh envelope paper */
+  --ink:        #1E2A44;   /* dark ink: main text */
+  --ink-blue:   #2347A6;   /* fountain-pen blue */
+  --stamp:      #B8321F;   /* stamp red */
+  --muted:      #5A5040;   /* faded brown text */
+  --line:       #B9A884;   /* dashed lines */
+
+  /* ===== The 3 fonts, each with a role ===== */
+  --font-title: "Bricolage Grotesque", sans-serif;  /* big titles */
+  --font-type:  "Courier Prime", monospace;         /* typewriter: labels, stamps */
+  --font-body:  "Inter", system-ui, sans-serif;     /* normal text */
+}
+
+/* ===== 2. Base ===== */
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+}
+a { color: var(--ink); text-decoration: none; }
+
+.container {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* ===== 3. Header ===== */
+.header {
+  border-bottom: 2px dashed var(--line);   /* the dashed "cut here" line */
+}
+.header-inner {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding-top: 18px;
+  padding-bottom: 18px;
+}
+.brand {
+  font-family: var(--font-title);
+  font-weight: 800;
+  font-size: 22px;
+  letter-spacing: -0.02em;
+}
+.brand-tag {
+  font-family: var(--font-type);
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: .12em;
+  color: var(--muted);
+}
+.nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-left: auto;          /* your old friend: push to the right */
+}
+.nav a {
+  padding: 10px 12px;
+  border-radius: 8px;
+}
+.nav a:hover,
+.nav a.active {
+  background: var(--paper-dark);
+  font-weight: 600;
+}
+
+/* ===== Hero layout ===== */
+.hero {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 56px;
+  padding-top: 72px;
+  padding-bottom: 56px;
+}
+.hero-text {
+  flex: 999 1 520px;        /* takes most of the space */
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+.hero-stamp {
+  flex: 1 1 320px;
+  display: flex;
+  justify-content: center;
+}
+
+/* ===== Text ===== */
+.label {
+  font-family: var(--font-type);
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: .18em;
+  color: var(--stamp);
+}
+.hero h1 {
+  margin: 0;
+  font-family: var(--font-title);
+  font-weight: 800;
+  font-size: clamp(44px, 6vw, 76px);
+  line-height: 1.0;
+  letter-spacing: -0.035em;
+}
+.blue { color: var(--ink-blue); }
+.hero p {
+  margin: 0;
+  font-size: 19px;
+  line-height: 1.6;
+  color: var(--muted);
+  max-width: 560px;
+}
+
+/* ===== Buttons ===== */
+.buttons { display: flex; flex-wrap: wrap; gap: 12px; }
+.btn {
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
+  padding: 0 22px;
+  border-radius: 10px;
+  background: var(--ink);
+  color: var(--card);
+  font-weight: 600;
+  transition: transform .1s;
+}
+.btn:active { transform: scale(.97); }
+.btn.outline {
+  background: transparent;
+  color: var(--ink);
+  border: 2px solid var(--ink);
+}
+
+/* ===== THE STAMP ===== */
+
+/* The perforated edge: a pattern of paper-colored dots */
+.perf {
+  padding: 18px;
+  background:
+    radial-gradient(circle, var(--paper) 5.5px, transparent 6px)
+      -9px -9px / 18px 18px,
+    var(--card);
+  transform: rotate(4deg);                              /* a bit tilted, like it was stuck by hand */
+  box-shadow: 0 18px 40px -18px rgba(30, 42, 68, .45);  /* lifts it off the paper */
+}
+
+/* The colored inside of the stamp */
+.stamp {
+  width: 300px;
+  height: 360px;
+  box-sizing: border-box;
+  padding: 26px;
+  background: var(--ink-blue);
+  color: var(--card);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;   /* top text at the top, code at the bottom */
+}
+.stamp-top {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-type);
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: .14em;
+}
+.stamp-code {
+  font-family: var(--font-title);
+  font-weight: 800;
+  font-size: 110px;
+  line-height: .9;
+  letter-spacing: -0.04em;
+  margin-top: auto;                 /* pushes the code down */
+}
+.stamp-word {
+  font-family: var(--font-type);
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: .2em;
+}
+
+/* ===== Journey section ===== */
+.journey {
+  background: var(--paper-dark);
+  border-top: 2px dashed var(--line);
+}
+.journey-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-top: 64px;
+  padding-bottom: 72px;
+}
+.section-head { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+.section-head h2 {
+  margin: 0;
+  font-family: var(--font-title);
+  font-weight: 800;
+  font-size: 42px;
+  letter-spacing: -0.03em;
+}
+.section-head p { margin: 0; color: var(--muted); font-size: 17px; }
+
+.row-label {
+  font-family: var(--font-type);
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: .16em;
+  color: var(--muted);
+  margin-top: 10px;
+}
+
+/* ===== A row of rooms ===== */
+.rooms {
+  display: flex;
+  flex-wrap: wrap;
+  row-gap: 14px;
+  align-items: stretch;      /* all rooms in a row get the same height */
+}
+.rooms.gap { gap: 14px; }   /* departments: space instead of connectors */
+
+/* ===== One room ===== */
+.room {
+  flex: 1 1 0;               /* all rooms share the width equally */
+  min-width: 170px;          /* but never smaller than this: then they wrap */
+  box-sizing: border-box;
+  min-height: 156px;
+  padding: 16px;
+  background: var(--card);
+  border: 1.5px solid #CDBF9F;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: all .35s ease; /* ready for step 4 */
+}
+.room h3 {
+  margin: 0;
+  font-family: var(--font-title);
+  font-weight: 800;
+  font-size: 21px;
+}
+.room-n {
+  font-family: var(--font-type);
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--muted);
+}
+.room-code {
+  font-family: var(--font-type);
+  font-size: 14px;
+  color: var(--ink-blue);
+}
+.room p { margin: 0; font-size: 14px; line-height: 1.5; color: var(--muted); }
+
+/* The last box: just a dashed outline, it's "outside" the post office */
+.room.end {
+  background: transparent;
+  border: 2px dashed #8C7B5C;
+  justify-content: center;
+}
+
+/* ===== The dashed route between rooms ===== */
+.link {
+  flex: 0 0 22px;            /* fixed width 22px, never grows or shrinks */
+  align-self: center;        /* vertically in the middle of the rooms */
+  border-top: 2px dotted #8C7B5C;
+}
+
+/* ===== Request picker ===== */
+.picker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.pick {
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 2px solid var(--line);
+  background: var(--card);
+  color: var(--ink);
+  font-family: var(--font-type);
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+}
+.pick.selected {               /* the chosen request */
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--card);
+}
+.send {
+  margin-left: auto;           /* push to the right */
+  min-height: 48px;
+  padding: 0 24px;
+  border: none;
+  border-radius: 10px;
+  background: var(--stamp);
+  color: #fff;
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+/* ===== The 3 states of a room ===== */
+.room.active,
+.room.passed {                 /* red border + glow, no movement */
+  border: 2px solid var(--stamp);
+  box-shadow: 0 0 0 5px rgba(184, 50, 31, .14);
+  background: #fff;
+}
+.room.dim {                    /* not on this letter's route */
+  opacity: .32;
+}
+
+/* ===== The envelope ===== */
+.envelope {
+  display: none;        /* hidden until a letter is sent */
+  align-self: flex-end; /* sits at the right side of the room */
+}
+.room.active .envelope {
+  display: block;       /* visible only inside the active room */
+}
+
+/* The bobbing animation */
+@keyframes bob {
+  0%   { transform: translateY(0)    rotate(-4deg); }
+  50%  { transform: translateY(-6px) rotate(3deg);  }
+  100% { transform: translateY(0)    rotate(-4deg); }
+}
+.envelope svg {
+  animation: bob 1.6s ease-in-out infinite;
+}
+
+/* ===== Tracking ===== */
+.tracking {
+  margin-top: 20px;
+  background: var(--card);
+  border: 1.5px solid #CDBF9F;
+  border-radius: 12px;
+  padding: 22px;
+}
+.tracking h3 {
+  margin: 0 0 10px;
+  font-family: var(--font-title);
+  font-weight: 800;
+  font-size: 20px;
+}
+.tracking-empty { margin: 0; color: var(--muted); }
+
+#tracking-list { list-style: none; margin: 0; padding: 0; }
+#tracking-list li {
+  display: flex;
+  gap: 14px;
+  padding: 9px 0;
+  border-bottom: 1px dashed #CDBF9F;
+  font-size: 14px;
+}
+#tracking-list li:last-child { border-bottom: none; }
+.t-time { width: 52px; font-family: var(--font-type); color: var(--muted); }
+.t-room { width: 150px; font-weight: 600; }
+.t-code { font-family: var(--font-type); color: var(--ink-blue); }
+
+/* ===== Postcard ===== */
+.postcard {
+  display: none;                  /* hidden until the letter comes back */
+  margin-top: 20px;
+  background: #fff;
+  border: 1.5px solid #CDBF9F;
+  border-radius: 12px;
+  padding: 26px;
+  box-shadow: 0 18px 40px -20px rgba(30, 42, 68, .5);
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 24px;
+}
+.postcard.show { display: flex; } /* JS adds "show" at the end */
+
+.postcard-text { flex: 1 1 240px; }
+.postcard-lines {
+  margin: 10px 0 0;
+  font-family: var(--font-type);
+  font-size: 15px;
+  line-height: 1.7;
+  white-space: pre-line;          /* keep the line breaks from the HTML */
+}
+
+/* ===== The round postmark ===== */
+.postmark {
+  width: 170px;
+  height: 170px;
+  border-radius: 50%;             /* a circle */
+  border: 5px double var(--stamp);
+  color: var(--stamp);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  transform: rotate(-8deg);       /* stamped a bit crooked, like by hand */
+}
+.postcard.show .postmark {
+  animation: stampIn .5s ease-out both;
+}
+.postmark-code {
+  font-family: var(--font-title);
+  font-weight: 800;
+  font-size: 48px;
+  line-height: 1;
+}
+.postmark-word {
+  font-family: var(--font-type);
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: .1em;
+  max-width: 120px;
+}
+
+/* The "BAM!" of the stamp hitting the paper */
+@keyframes stampIn {
+  0%   { transform: scale(1.8) rotate(-20deg); opacity: 0; }
+  70%  { transform: scale(.95) rotate(-8deg);  opacity: 1; }
+  100% { transform: scale(1)   rotate(-8deg);  opacity: 1; }
+}
+
+/* ===== Phones (screens narrower than 700px) ===== */
+@media (max-width: 700px) {
+  .link { display: none; }              /* hide the dotted routes, rooms are stacked */
+  .rooms { gap: 14px; }                 /* space between the stacked rooms */
+  .send { margin-left: 0; width: 100%; } /* big Send button, full width */
+  .hero { padding-top: 40px; gap: 32px; }
+  .stamp { width: 240px; height: 290px; } /* a smaller stamp */
+  .stamp-code { font-size: 80px; }
+}
