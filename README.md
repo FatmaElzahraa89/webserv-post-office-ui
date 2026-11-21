@@ -2,6 +2,10 @@
 
 ![webserv Post Office](cover.png)
 
+**▶ Try the live demo:** https://fatmaelzahraa89.github.io/webserv-post-office-ui/
+
+*(On GitHub Pages there is no C++ server, so the replies are simulated in your browser, with the same status codes and error pages as the real webserv.)*
+
 **webserv** is an HTTP/1.1 server written from scratch in C++98 for the 42 Common Core
 (by smetz, fabdelba and dvogli). The website it serves is designed as a **post office**:
 every request is a letter, and every room of the post office is one part of the server's code.
